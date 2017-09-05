@@ -1,0 +1,40 @@
+version: '2'
+
+services:
+  db:
+    image: mysql
+    env_file: .env
+    volumes:
+       - ./storage/db-data/mysql:/var/lib/mysql
+    ports:
+      - '3306'
+    networks:
+      - huginn-network
+    environment:
+      MYSQL_DATABASE: huginn
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+
+  huginn:
+    image: huginn/huginn
+    ports:
+      - '3000:3000'
+    expose:
+      - '3000'
+    env_file: .env
+    environment:
+      HUGINN_DATABASE_ADAPTER: mysql2
+      HUGINN_DATABASE_NAME: huginn
+      HUGINN_DATABASE_USERNAME: ${DB_USER}
+      HUGINN_DATABASE_PASSWORD: ${DB_PASS}
+      MYSQL_PORT_3306_TCP_ADDR: db
+      MYSQL_PORT_3306_TCP_PORT: 3306
+      ADDITIONAL_GEMS: 'huginn_mysql2_agent(git: https://github.com/yubuylov/huginn_mysql2_agent.git)'
+    depends_on:
+      - db
+    networks:
+      - huginn-network
+
+networks:
+  huginn-network:
