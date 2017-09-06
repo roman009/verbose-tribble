@@ -49,7 +49,8 @@ services:
   nginx-proxy:
     image: jwilder/nginx-proxy
     ports:
-      - "443:3000"
+      - "80:80"
+      - "443:443"
     volumes:
       - "./nginx/vhost.d:/etc/nginx/vhost.d"
       - "./nginx/html:/usr/share/nginx/html"
