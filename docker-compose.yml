@@ -8,19 +8,16 @@ services:
        - ./storage/db-data/mysql:/var/lib/mysql
     ports:
       - '3306'
-    networks:
-      - huginn-network
     environment:
       MYSQL_DATABASE: huginn
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
       MYSQL_RANDOM_ROOT_PASSWORD: 1
+    restart: always
 
   huginn:
     image: huginn/huginn
     ports:
-      - '3000:3000'
-    expose:
       - '3000'
     env_file: .env
     environment:
@@ -33,8 +30,37 @@ services:
       ADDITIONAL_GEMS: 'huginn_mysql2_agent(git: https://github.com/yubuylov/huginn_mysql2_agent.git)'
     depends_on:
       - db
-    networks:
-      - huginn-network
+    restart: always
 
-networks:
-  huginn-network:
+  nginx:
+    image: nginx
+    links:
+      - huginn
+    depends_on:
+      - huginn
+    volumes:
+      - './etc/nginx/conf.d/:/etc/nginx/conf.d/'
+    environment:
+      VIRTUAL_HOST: example.com
+      LETSENCRYPT_HOST: example.com
+      LETSENCRYPT_EMAIL: youremail@example.com
+    restart: always
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "443:3000"
+    volumes:
+      - "./nginx/vhost.d:/etc/nginx/vhost.d"
+      - "./nginx/html:/usr/share/nginx/html"
+      - "./nginx/certs:/etc/nginx/certs"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+    restart: always
+
+  letsencrypt-nginx-proxy-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    volumes_from:
+      - "nginx-proxy"
+    restart: always
