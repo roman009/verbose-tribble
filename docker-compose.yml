@@ -2,7 +2,7 @@ version: '2'
 
 services:
   db:
-    image: mysql
+    image: mysql:5.7
     env_file: .env
     volumes:
        - ./storage/db-data/mysql:/var/lib/mysql
